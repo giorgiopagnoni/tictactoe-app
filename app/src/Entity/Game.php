@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\GameRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
 
@@ -20,7 +22,7 @@ class Game
     private string $id;
 
     /**
-     * @ORM\Column(type="integer", nullable=true)
+     * @ORM\Column(type="smallint", nullable=true)
      */
     private ?int $winner;
 
@@ -32,11 +34,18 @@ class Game
     /**
      * @ORM\Column(type="datetime_immutable", nullable=true)
      */
-    private \DateTimeImmutable $closedAt;
+    private \DateTimeImmutable|null $closedAt;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Move::class, mappedBy="game", orphanRemoval=true)
+     * @ORM\OrderBy({"id" = "ASC"})
+     */
+    private $moves;
 
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->moves = new ArrayCollection();
     }
 
     public function getId(): string
@@ -49,9 +58,15 @@ class Game
         return $this->winner;
     }
 
-    public function setWinner(?int $winner): void
+    public function setWinner(?int $winner): self
     {
         $this->winner = $winner;
+        return $this;
+    }
+
+    public function isGameOver(): bool
+    {
+        return $this->closedAt !== null;
     }
 
     public function getCreatedAt(): \DateTimeImmutable
@@ -59,8 +74,39 @@ class Game
         return $this->createdAt;
     }
 
-    public function setClosedAt(\DateTimeImmutable $closedAt): void
+    public function setClosedAt(\DateTimeImmutable $closedAt): self
     {
         $this->closedAt = $closedAt;
+        return $this;
+    }
+
+    /**
+     * @return Collection|Move[]
+     */
+    public function getMoves(): Collection
+    {
+        return $this->moves;
+    }
+
+    public function addMove(Move $move): self
+    {
+        if (!$this->moves->contains($move)) {
+            $this->moves[] = $move;
+            $move->setGame($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMove(Move $move): self
+    {
+        if ($this->moves->removeElement($move)) {
+            // set the owning side to null (unless already changed)
+            if ($move->getGame() === $this) {
+                $move->setGame(null);
+            }
+        }
+
+        return $this;
     }
 }
