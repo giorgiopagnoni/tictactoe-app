@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Constraints\Collection;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use OpenApi\Annotations as OA;
 
 class TicTacToeController extends AbstractController
 {
@@ -22,7 +23,16 @@ class TicTacToeController extends AbstractController
         return $this->json(null);
     }
 
-    #[Route('/game/start', name: 'game_start', methods: 'GET')]
+    #[Route('/api/game/start', name: 'game_start', methods: 'POST')]
+    /**
+     * @OA\Response(
+     *  response=200,
+     *  description="A new game has been created; returns its id",
+     *  @OA\JsonContent(
+     *      @OA\Property(property="id", type="string", example="1ec03e03-9be8-6e8e-8b6d-d9a473d5056e")
+     *  )
+     * )
+     */
     public function startGame(EntityManagerInterface $entityManager): JsonResponse
     {
         $game = new Game();
@@ -34,7 +44,30 @@ class TicTacToeController extends AbstractController
         ]);
     }
 
-    #[Route('/game/{gameId}/advance', name: 'game_advance', requirements: ['gameId' => '%routing.uuid%'], methods: 'PUT')]
+    #[Route('/api/game/{gameId}/advance', name: 'game_advance', requirements: ['gameId' => '%routing.uuid%'], methods: 'PUT')]
+    /**
+     * @OA\RequestBody(
+     *     @OA\JsonContent(
+     *          @OA\Property(property="player", type="integer", minimum=1, maximum=2, example=1),
+     *          @OA\Property(property="position", type="integer", minimum=0, maximum=8, example=5)
+     *     )
+     * )
+     * @OA\Response(
+     *  response=200,
+     *  description="The move was successfull",
+     *  @OA\JsonContent(
+     *      @OA\Property(property="board", type="array", example="[0,1,0,0,2,1,0,0,0]",
+     *              @OA\Items(type="integer"),
+     *         ),
+     *      @OA\Property(property="winner", type="integer", minimum=1, maximum=2, example=1),
+     *      @OA\Property(property="isGameOver", type="boolean")
+     *  )
+     * )
+     * @OA\Response(
+     *  response=404,
+     *  description="Open game not found",
+     * )
+     */
     public function advanceGame(string             $gameId, Request $request,
                                 GameService        $gameService,
                                 ValidatorInterface $validator): JsonResponse
@@ -66,7 +99,7 @@ class TicTacToeController extends AbstractController
         try {
             $result = $gameService->advanceGame($game, $reqParams['player'], $reqParams['position']);
         } catch (\Exception $exception) {
-            return $this->json(['error' => $exception->getMessage()], 401);
+            return $this->json(['error' => $exception->getMessage()], 422);
         }
 
         return $this->json($result);

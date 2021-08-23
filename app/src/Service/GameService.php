@@ -49,9 +49,8 @@ class GameService
             throw new \Exception('Not your turn');
         }
 
-        $board[$position] = $player;
-
         // update game status
+        $board[$position] = $player;
         $winner = $this->hasPlayerWon($board, $player) ? $player : null;
         if ($winner) {
             $game->setWinner($winner);
