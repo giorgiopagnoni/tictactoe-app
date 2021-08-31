@@ -1,5 +1,11 @@
 `docker compose up`
+
+Avviato tutto, eseguire questi tre comandi;
+
 `docker exec -ti ttt-php-gp composer install`
+
+`docker exec -ti ttt-php-gp bin/console doctrine:database:create`
+
 `docker exec -ti ttt-php-gp bin/console doctrine:migrations:migrate --no-interaction`
 
 Inizio gioco:
