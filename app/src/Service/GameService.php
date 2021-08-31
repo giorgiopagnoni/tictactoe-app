@@ -34,6 +34,14 @@ class GameService
         return $this->gameRepository->findOneBy(['id' => $id, 'closedAt' => null]);
     }
 
+    public function createGame(): Game
+    {
+        $game = new Game();
+        $this->entityManager->persist($game);
+        $this->entityManager->flush();
+        return $game;
+    }
+
     /**
      * @throws \Exception
      */

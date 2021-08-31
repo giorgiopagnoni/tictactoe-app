@@ -2,9 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\Game;
 use App\Service\GameService;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,12 +31,9 @@ class TicTacToeController extends AbstractController
      *  )
      * )
      */
-    public function startGame(EntityManagerInterface $entityManager): JsonResponse
+    public function startGame(GameService $gameService): JsonResponse
     {
-        $game = new Game();
-        $entityManager->persist($game);
-        $entityManager->flush();
-
+        $game = $gameService->createGame();
         return $this->json([
             'id' => $game->getId()
         ]);
@@ -68,14 +63,32 @@ class TicTacToeController extends AbstractController
      *  description="Open game not found",
      * )
      */
-    public function advanceGame(string             $gameId, Request $request,
+    public function advanceGame(string             $gameId,
+                                Request            $request,
                                 GameService        $gameService,
                                 ValidatorInterface $validator): JsonResponse
     {
         $game = $gameService->findOpenGameById($gameId);
-        if (!$game) return new JsonResponse(null, 404);
+        if (!$game) {
+            return new JsonResponse(['error' => 'Game not found'], 404);
+        }
 
         $reqParams = json_decode($request->getContent(), true);
+        if (!$this->isRequestValid($validator, $reqParams)){
+            return new JsonResponse(['error' => 'Invalid position or player'], 400);
+        }
+
+        try {
+            $result = $gameService->advanceGame($game, $reqParams['player'], $reqParams['position']);
+        } catch (\Exception $exception) {
+            return $this->json(['error' => $exception->getMessage()], 422);
+        }
+
+        return $this->json($result);
+    }
+
+    private function isRequestValid(ValidatorInterface $validator, $request): bool
+    {
         $constraints = new Collection([
             'player' => [
                 new Assert\NotBlank(),
@@ -87,21 +100,7 @@ class TicTacToeController extends AbstractController
             ]
         ]);
 
-        $errors = $validator->validate($reqParams, $constraints);
-        if ($errors->count() > 0) {
-            $errorMessages = [];
-            foreach ($errors as $e) {
-                $errorMessages[$e->getPropertyPath()][] = $e->getMessage();
-            }
-            return $this->json(['errors' => $errorMessages], 400);
-        }
-
-        try {
-            $result = $gameService->advanceGame($game, $reqParams['player'], $reqParams['position']);
-        } catch (\Exception $exception) {
-            return $this->json(['error' => $exception->getMessage()], 422);
-        }
-
-        return $this->json($result);
+        $errors = $validator->validate($request, $constraints);
+        return count($errors) === 0;
     }
 }
