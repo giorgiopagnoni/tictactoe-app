@@ -1,4 +1,6 @@
 `docker compose up`
+`docker exec -ti ttt-php-gp composer install`
+`docker exec -ti ttt-php-gp bin/console doctrine:migrations:migrate --no-interaction`
 
 Inizio gioco:
 
