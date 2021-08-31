@@ -8,6 +8,8 @@ Avviato tutto, eseguire questi tre comandi;
 
 `docker exec -ti ttt-php-gp bin/console doctrine:migrations:migrate --no-interaction`
 
+Una bozza di documentazione OpenApi si può trovare a `http://127.0.0.1:8080/api/doc.json`
+
 Inizio gioco:
 
 `curl --location --request POST 'http://127.0.0.1:8080/api/game/start'
