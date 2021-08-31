@@ -21,7 +21,7 @@ Copiare id ricevuto ed utilizzarlo nelle richieste successive al posto di GAMEID
 "player": 1
 }'`
 
-`curl --location --request PUT 'http://127.0.0.1:8080/api/game/GAMEID/advance' --header 'Accept: application/json' --data-raw '{
+`curl --location --request PUT 'http://127.0.0.1:8080/api/game/GAMEID/advance' --header 'Content-Type: application/json' --header 'Accept: application/json' --data-raw '{
 "position": 3,
 "player": 2
 }'`
